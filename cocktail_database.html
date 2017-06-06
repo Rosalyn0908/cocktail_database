@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+    <head>
+    <title>Cocktail Database</title>
+        <link type="text/css" rel="stylesheet" href="https://fonts.googleapis.com/css?family=Quattrocento:400,700|Quattrocento+Sans:400,400italic,700,700italic">
+        <style type="text/css">
+            body {
+                font-family : 'Quattrocento Sans', sans-serif;
+                color       : #22313f;
+            }
+
+            h3 {
+                font-family : 'Quattrocento', serif;
+                color       : #d60039;
+                font-weight : normal;
+                font-size   : 25px;
+            }
+
+            .thumbnail {
+                width: 30px;
+            }
+
+            .drink_name {
+                color : #d60039;
+            }
+
+            #drink_details {
+                display : none;
+            }
+
+            #main_drink_thumbnail {
+                border : 2px solid #d60039;
+                width  : 250px;
+            }
+
+            table {
+                display : inline;
+            }
+
+            table .header_row {
+                background-color : #fff;
+                color            : #22313f;
+                text-align       : left;
+            }
+
+            table .header_row th {
+                border-bottom    : 1px solid #d60039;
+                font-weight      : normal;
+                font-family      : 'Quattrocento Sans', sans-serif;
+                font-size        : 14px;
+                padding          : 10px 0px;
+            }
+
+            table tr {
+                transition : background-color .2s;
+                border     : 1px solid #e2e4e7;
+                cursor     : pointer;
+                height     : 35px;
+            }
+
+            table tr:not(.header_row):hover {
+                background-color : #e2e4e6;
+            }
+
+            table .selected_row {
+                background-color : #e2e4e7;
+            }
+
+            input[type="text"] {
+                border        : 1px solid #bdc3c7;
+                border-radius : 3px;
+                display       : inline;
+                margin        : 2px;
+                padding       : 4px;
+                transition    : all .2s ease-in-out;
+                font-size     : 14px;
+                width         : 400px;
+            }
+
+            input[type="text"]:hover,
+            input[type="text"]:focus {
+                border     : 1px groove #d60039;
+                box-shadow : 0px 0px 3px #d60039;
+                outline    : none;
+            }
+
+            #drink_details {
+                display          : none;
+                width            : auto;
+                max-width        : 40%;
+                float            : right;
+                background-color : #e2e4e7;
+                padding          : 20px;
+                border-radius    : 5px;
+                box-shadow       : 0 4px 8px 0 rgba(0,0,0,0.2),0 0 0 1px rgba(0,0,0,0.08);
+            }
+
+            #category,
+            #glass_type {
+                font-style : italic;
+            }
+        </style>
+        <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js"></script>
+        <script type="text/javascript" src="http://tablesorter.com/__jquery.tablesorter.min.js"              ></script>
+        <script type="text/javascript">
+
+            function search() {
+                var search = $('#search').val() || "";
+
+                $.ajax({
+                      url     : 'https://www.thecocktaildb.com/api/json/v1/1/search.php'
+                    , async   : false
+                    , data    : {
+                        s : search
+                    }
+                    , success : function( response ) {
+                        load_table( response );
+                    }
+                });
+            }
+
+            function load_table( data ) {
+                var drink;
+                for ( var i = 0; i < data.drinks.length; i++ ) {
+                    drink = data.drinks[i];
+                    drink_thumbnail = drink.strDrinkThumb || '';
+                    $('table').append(
+                          '<tr class="drink_row">'
+                        + '<td data-drink-id="' + drink.idDrink + '" class="drink_name">' + drink.strDrink + '</td>'
+                        + '<td>' + drink.strAlcoholic + '</td>'
+                        + '<td>' + drink.strCategory + '</td>'
+                        + '<td>' + drink.strGlass + '</td>'
+                        + '<td><img class="thumbnail" src="' + drink_thumbnail + '"></td>'
+                        + '</tr>'
+                    );
+                }
+                $('.tableSorter').tablesorter();
+                $('.drink_row').click(function() {
+                    $('.selected_row').removeClass('selected_row');
+                    $(this).addClass('selected_row');
+                    var drink_details_div = $('#drink_details');
+                    var drink_id      = $(this).find('.drink_name').data('drink-id');
+                    $.ajax({
+                           url     : 'https://www.thecocktaildb.com/api/json/v1/1/lookup.php'
+                         , async   : false
+                         , data    : {
+                            i : drink_id
+                         }
+                         , success : function( response ) {
+                            var drink = response.drinks[0]
+                            var ingredients_list;
+                            drink_details_div.fadeIn();
+                            drink_details_div.find('#main_drink_thumbnail').attr('src', '' + drink.strDrinkThumb + '');
+                            drink_details_div.find('h3'           ).text(drink.strDrink);
+                            drink_details_div.find('#glass_type'  ).text('Use a ' + drink.strGlass);
+                            drink_details_div.find('#category'    ).text(drink.strCategory);
+                            drink_details_div.find('#instructions').text(drink.strInstructions);
+                            drink_details_div.find('#ingredients_imgs').html(
+                                  '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient1 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient2 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient3 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient4 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient5 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient6 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient7 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient8 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient9 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient10 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient11 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient12 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient13 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient14 + '-Small.png">'
+                                + '<img src="http://www.thecocktaildb.com/images/ingredients/' + drink.strIngredient15 + '-Small.png">'
+                            );
+                            drink_details_div.find('#ingredients ol').html(
+                                    '<li>' + drink.strMeasure1 + ' ' + drink.strIngredient1+ '</li>'
+                                  + '<li>' + drink.strMeasure2 + ' ' + drink.strIngredient2+ '</li>'
+                                  + '<li>' + drink.strMeasure3 + ' ' + drink.strIngredient3+ '</li>'
+                                  + '<li>' + drink.strMeasure4 + ' ' + drink.strIngredient4+ '</li>'
+                                  + '<li>' + drink.strMeasure5 + ' ' + drink.strIngredient5+ '</li>'
+                                  + '<li>' + drink.strMeasure6 + ' ' + drink.strIngredient6+ '</li>'
+                                  + '<li>' + drink.strMeasure7 + ' ' + drink.strIngredient7+ '</li>'
+                                  + '<li>' + drink.strMeasure8 + ' ' + drink.strIngredient8+ '</li>'
+                                  + '<li>' + drink.strMeasure9 + ' ' + drink.strIngredient9+ '</li>'
+                                  + '<li>' + drink.strMeasure10 + ' ' + drink.strIngredient10+ '</li>'
+                                  + '<li>' + drink.strMeasure11 + ' ' + drink.strIngredient11+ '</li>'
+                                  + '<li>' + drink.strMeasure12 + ' ' + drink.strIngredient12+ '</li>'
+                                  + '<li>' + drink.strMeasure13 + ' ' + drink.strIngredient13+ '</li>'
+                                  + '<li>' + drink.strMeasure14 + ' ' + drink.strIngredient14+ '</li>'
+                                  + '<li>' + drink.strMeasure15 + ' ' + drink.strIngredient15+ '</li>'
+                            );
+
+                            $('li').filter(function(){
+                                return $.trim($(this).html()) == '';
+                            }).hide();
+
+                            $('img[src="http://www.thecocktaildb.com/images/ingredients/-Small.png"], img[src="null"]').hide();
+                        }
+                    });
+                });
+            }
+
+        </script>
+    </head>
+    <body>
+        <input type="text" id="search" placeholder="Search cocktails via keyword" autocomplete="off">
+        <button onclick="search()">Search</button>
+        <br>
+        <table class="tableSorter">
+            <thead>
+                <tr class="header_row">
+                    <th>Drink Name</th>
+                    <th>Drink Type</th>
+                    <th>Drink Category</th>
+                    <th>Drink Glass</th>
+                    <th>Drink Image</th>
+                </tr>
+            </thead>
+        </table>
+        <div id="drink_details">
+            <img id="main_drink_thumbnail" src="">
+            <h3></h3>
+            <div id="category"></div>
+            <div id="glass_type"></div>
+            <br>
+            <div id="ingredients">
+                <div id="ingredients_imgs"></div>
+                <ol></ol>
+            </div>
+            <div id="instructions"></div>
+        </div>
+    </body>
+</html>
